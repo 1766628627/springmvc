@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.accp.springmvc.dao.ReimburseMapper" >
+<!-- 主详查询 -->
+<resultMap type="com.accp.springmvc.vo.ReimburseDetailVo" id="querydetail">
+			<association property="reimburse" column="reimburseId" select="selectrei" />
+			<collection  property="details" column="reimburseId" select="selectdetail" />
+</resultMap>
+
+<!-- 主表查询 -->
+	 <select id="select" resultMap="querydetail">
+	SELECT a.`reimburseId`,b.`employeeName`,a.`createTime`,d.`employeeName` AS nextname
+		,e.`statusName`,a.`totalCount`FROM `tb_reimburse` a
+		JOIN `employee` b
+		ON a.`createMan`=b.`employeeId`
+		JOIN `employee` d
+		ON a.`nextDealMan`=d.`employeeId`
+		JOIN `tb_status` e
+		ON a.`statusId`=e.`statusId`
+		where a.`reimburseId`=#{id}
+		</select>
+		
+		<select id="selectrei" resultType="com.accp.springmvc.vo.ReimburseVo">
+	SELECT a.`reimburseId`,b.`employeeName`,a.`createTime`,d.`employeeName` AS nextname
+		,e.`statusName`,a.`totalCount`FROM `tb_reimburse` a
+		JOIN `employee` b
+		ON a.`createMan`=b.`employeeId`
+		JOIN `employee` d
+		ON a.`nextDealMan`=d.`employeeId`
+		JOIN `tb_status` e
+		ON a.`statusId`=e.`statusId`
+		where a.`reimburseId`=#{id}
+		</select>
+<!-- 详表查询 -->
+	<select id="selectdetail" resultType="com.accp.springmvc.pojo.Detail">
+		SELECT * FROM `reimburse_detail` WHERE mainId=#{id}
+	
+	</select>
+<!-- 修改报销表 -->	
+	<update id="modify">
+		UPDATE `tb_reimburse` SET `statusId` = #{statusid} WHERE `reimburseId` = #{id} 
+	</update>
+<!-- 新增报销表 -->
+	<insert id="adddetail">
+	 		insert into reimburse_detail (mainId, subTotal, 
+      			`desc`, pictureName, picturePath) values
+			<foreach collection="detail" item="temp" separator=",">
+				(#{id}, #{temp.subtotal}, 
+      			#{temp.desc}, #{temp.picturename}, #{temp.picturepath})
+			</foreach>
+	</insert>
+<!-- 删除报销表 -->	
+	<delete id="removedetail">
+	DELETE FROM `reimburse_detail` WHERE `mainId` = #{id} ;
+	</delete>
+  <select id="querybyid" resultType="com.accp.springmvc.vo.ReimburseVo">
+	SELECT a.`reimburseId`,b.`employeeName`,a.`createTime`,d.`employeeName` AS nextname
+		,e.`statusName`,a.`totalCount`FROM `tb_reimburse` a
+		JOIN `employee` b
+		ON a.`createMan`=b.`employeeId`
+		JOIN `employee` d
+		ON a.`nextDealMan`=d.`employeeId`
+		JOIN `tb_status` e
+		ON a.`statusId`=e.`statusId`
+		where 1=1
+			<choose>
+		<when test="positionid==5||positionid==6">
+		
+		and	a.`createMan`=#{id} 
+		
+		</when>
+		
+		<when test="positionid==1 or positionid==2 or positionid==4">
+		and	(a.`createMan`=1004 AND a.`statusId` =1)OR (a.`createMan`=1004 AND a.`statusId`=6) OR a.`statusId`!=1 AND a.`statusId`!=6
+		
+		</when>
+		<when test="positionid==3 ">
+		and	(a.`createMan`=1004 AND a.`statusId` =1)OR (a.`createMan`=1004 AND a.`statusId`=6) OR a.`statusId`!=1 AND a.`statusId`!=6 AND (b.`positionId`=5 OR a.`createMan`=#{id})
+		
+		</when>
+		</choose>
+		ORDER BY a.`reimburseId` DESC
+	</select>
+	
+	<!-- 主祥新增 -->
+  <insert id="add">
+		insert into tb_reimburse (reimburseId, typeId, createMan, 
+      createTime, departmentId, nextDealMan, 
+      EVENT, totalCount, statusId)
+		values (#{rei.reimburseid}, 2, #{rei.createman}, 
+      #{rei.createtime,jdbcType=TIMESTAMP}, #{rei.departmentid}, #{rei.nextdealman}, 
+      #{rei.event}, #{rei.totalcount}, #{rei.statusid});
+		
+		<if test="rei.reides.size()!=0">
+			 insert into reimburse_detail (mainId, subTotal, 
+      			`desc`, pictureName, picturePath) values
+			<foreach collection="rei.reides" item="temp" separator=",">
+				(#{rei.reimburseid}, #{temp.subtotal}, 
+      			#{temp.desc}, #{temp.picturename}, #{temp.picturepath})
+			</foreach>
+		</if>
+	</insert>
+  <update id="modifybyid">
+		UPDATE `tb_reimburse` SET `statusId` = #{statusid} WHERE `reimburseId` = #{id} 
+	</update>
+	
+	  <update id="modifybyname">
+		UPDATE `tb_reimburse` SET `statusId` = #{statusid} ,
+  `nextDealMan` = #{nextid} WHERE `reimburseId` = #{id} 
+	</update>
+	
+	<delete id="remove">
+	DELETE FROM `tb_reimburse` WHERE `reimburseId` = #{id} ;
+	DELETE FROM `reimburse_detail` WHERE `mainId` = #{id} ;
+	</delete>
+	
+	
+	<!-- 主详查询 -->
+<resultMap type="com.accp.springmvc.vo.ReimburseCheckVo" id="querycheck">
+			<association property="reimburse" column="reimburseId" select="selectrei1" />
+			<collection  property="details" column="reimburseId" select="selectdetail1" />
+			<collection  property="checks" column="reimburseId" select="selectcheck" />
+</resultMap>
+
+<!-- 主表查询 -->
+	 <select id="selectche" resultMap="querycheck">
+	SELECT a.`reimburseId`,b.`employeeName`,a.`createTime`,d.`employeeName` AS nextname
+		,e.`statusName`,a.`totalCount`FROM `tb_reimburse` a
+		JOIN `employee` b
+		ON a.`createMan`=b.`employeeId`
+		JOIN `employee` d
+		ON a.`nextDealMan`=d.`employeeId`
+		JOIN `tb_status` e
+		ON a.`statusId`=e.`statusId`
+		where a.`reimburseId`=#{id}
+		</select>
+		
+		<select id="selectrei1" resultType="com.accp.springmvc.vo.ReimburseVo">
+	SELECT a.`reimburseId`,b.`employeeName`,a.`createTime`,d.`employeeName` AS nextname
+		,e.`statusName`,a.`totalCount`FROM `tb_reimburse` a
+		JOIN `employee` b
+		ON a.`createMan`=b.`employeeId`
+		JOIN `employee` d
+		ON a.`nextDealMan`=d.`employeeId`
+		JOIN `tb_status` e
+		ON a.`statusId`=e.`statusId`
+		where a.`reimburseId`=#{id}
+		</select>
+<!-- 详表查询 -->
+	<select id="selectdetail1" resultType="com.accp.springmvc.pojo.Detail">
+		SELECT * FROM `reimburse_detail` WHERE mainId=#{id}
+	
+	</select>
+	
+	<select id="selectcheck" resultType="com.accp.springmvc.vo.CheckVo">
+		SELECT a.`checkId`,b.`employeeName`,c.`resultName`,a.`checkTime`,a.`checkComment` FROM `tb_check` a 
+		JOIN `employee` b
+	ON a.`checkMan`=b.`employeeId`
+	JOIN `check_result` c
+	ON a.`checkResult`=c.`resultId`
+	WHERE a.`bizId`=#{id} and a.`typeId`=2
+	
+	</select>
+  
+  <!-- 带条件分页查询 -->
+  <select id="querybytime" resultType="com.accp.springmvc.vo.ReimburseVo">
+	SELECT a.`reimburseId`,b.`employeeName`,a.`createTime`,d.`employeeName` AS nextname
+		,e.`statusName`,a.`totalCount`FROM `tb_reimburse` a
+		JOIN `employee` b
+		ON a.`createMan`=b.`employeeId`
+		JOIN `employee` d
+		ON a.`nextDealMan`=d.`employeeId`
+		JOIN `tb_status` e
+		ON a.`statusId`=e.`statusId`
+		where 1=1
+			<choose>
+		<when test="positionid==5||positionid==6">
+		
+		and	a.`createMan`=#{id} 
+		
+		</when>
+		
+		<when test="positionid==1 or positionid==2 or positionid==4">
+		and	((a.`createMan`=1004 AND a.`statusId` =1)OR (a.`createMan`=1004 AND a.`statusId`=6) OR a.`statusId`!=1 AND a.`statusId`!=6)
+		
+		</when>
+		<when test="positionid==3 ">
+		and	((a.`createMan`=1004 AND a.`statusId` =1)OR (a.`createMan`=1004 AND a.`statusId`=6) OR a.`statusId`!=1 AND a.`statusId`!=6 AND (b.`positionId`=5 OR a.`createMan`=#{id}))
+		
+		</when>
+		</choose>
+		<if test="stime!=null">
+			and a.`createTime`> #{stime}
+		</if>
+		<if test="etime!=null">
+			and  #{etime} > a.`createTime`
+		</if>
+		<if test="statusid!=0">
+			and a.`statusId`=#{statusid}
+		</if>
+		ORDER BY a.`reimburseId` DESC
+	</select>
+</mapper>

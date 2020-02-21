@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.accp.springmvc.dao.LeaveMapper">
+	<select id="querybyid"
+		resultType="com.accp.springmvc.vo.LeaveTwoVo">
+		SELECT a.`leaveId`,b.`employeeName`, d.`departmentName`,a.`startTime`,a.`endTime`,a.`totalCount`,a.`event`,c.`statusName` FROM `tb_leave` a
+JOIN `employee` b
+ON a.`createMan`=b.`employeeId`
+JOIN `tb_status` c
+ON a.`statusId`=c.`statusId`
+JOIN `department` d
+ON b.`departmentId`=d.`departmentId`
+where a.`leaveId`=#{id}
+	</select>
+	
+	<select id="queryby"
+		resultType="com.accp.springmvc.vo.LeaveVo">
+		SELECT a.`leaveId`,b.`employeeName`,a.`createTime`,(SELECT
+		`checkTime` FROM`tb_check` WHERE `bizId`=a.`leaveId` ORDER BY `checkTime` DESC LIMIT 0,1) AS
+		`checkTime`,d.`employeeName` AS nextname
+		,e.`statusName`,a.`totalCount`,(SELECT
+		`resultName` FROM `tb_check` f JOIN `check_result` g ON f.checkResult=g.resultId WHERE `bizId`=a.`leaveId` ORDER BY `checkTime` DESC LIMIT 0,1) AS
+		`ResultName`FROM `tb_leave` a
+		JOIN `employee` b
+		ON a.`createMan`=b.`employeeId`
+		JOIN `employee` d
+		ON a.`nextDealMan`=d.`employeeId`
+		JOIN `tb_status` e
+		ON a.`statusId`=e.`statusId`
+
+		
+		where 1=1
+		<choose>
+		<when test="positionid==3">
+		
+		and	a.`createMan`=#{id} or b.`positionId`=5
+		
+		</when>
+		
+		<when test="positionid==2 or positionid==4 or positionid==5">
+		and	a.`createMan`=#{id} 
+		
+		</when>
+		</choose>
+		ORDER BY a.`leaveId` DESC
+	</select>
+	
+	<insert id="addleave">
+	INSERT INTO tb_leave (typeId,createMan,departmentId,createTime,startTime,endTime,nextDealMan,`event`,totalCount,statusId
+) VALUES(#{typeid},#{createman},#{departmentid},#{createtime},#{starttime},#{endtime},#{nextdealman},#{event},#{totalcount},#{statusid}) ;
+	
+	</insert>
+	 <update id="modify" parameterType="com.accp.springmvc.pojo.Leave" >
+   UPDATE 
+  `tb_leave` 
+	SET
+  `nextDealMan` = #{nextdealman},
+  `statusId` = #{statusid}
+	WHERE `leaveId` = #{id} ;
+
+  </update>
+  <update id="modifybyid" parameterType="com.accp.springmvc.pojo.Leave" >
+   UPDATE 
+  `tb_leave` 
+	SET
+  `statusId` = #{statusid}
+	WHERE `leaveId` = #{id} ;
+
+  </update>
+
+
+</mapper>

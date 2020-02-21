@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.accp.springmvc.dao.EmployeeMapper">
+	<select id="login" resultType="com.accp.springmvc.vo.EmployeeVo">
+		SELECT
+		a.`employeeId`,a.`employeeName`,a.`password`,b.`departmentName`,c.`positionName`,a.`departmentId`,a.`positionId`
+		FROM `employee` a
+		JOIN `department` b
+		ON a.`departmentId`=b.`departmentId`
+		JOIN `position` c
+		ON a.`positionId`=c.`positionId` where a.employeeId=#{id} and
+		a.password=#{pwd}
+	</select>
+</mapper>
